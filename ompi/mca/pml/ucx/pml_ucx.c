@@ -144,6 +144,7 @@ int mca_pml_ucx_open(void)
                              UCP_PARAM_FIELD_MT_WORKERS_SHARED |
                              UCP_PARAM_FIELD_ESTIMATED_NUM_EPS;
     params.features        = UCP_FEATURE_TAG;
+    params.features       |= UCP_FEATURE_WAKEUP;
     params.request_size    = sizeof(ompi_request_t);
     params.request_init    = mca_pml_ucx_request_init;
     params.request_cleanup = mca_pml_ucx_request_cleanup;
@@ -241,6 +242,7 @@ int mca_pml_ucx_init(void)
     mca_pml_ucx_completed_request_init(&ompi_pml_ucx.completed_send_req);
 
     opal_progress_register(mca_pml_ucx_progress);
+    opal_progress_register_block(mca_pml_ucx_wait);
 
     PML_UCX_VERBOSE(2, "created ucp context %p, worker %p",
                     (void *)ompi_pml_ucx.ucp_context,
@@ -454,7 +456,12 @@ int mca_pml_ucx_enable(bool enable)
 
 int mca_pml_ucx_progress(void)
 {
-    ucp_worker_progress(ompi_pml_ucx.ucp_worker);
+    return ucp_worker_progress(ompi_pml_ucx.ucp_worker);
+}
+
+int mca_pml_ucx_wait(void)
+{
+    ucp_worker_wait_timed(ompi_pml_ucx.ucp_worker, 100);
     return OMPI_SUCCESS;
 }
 

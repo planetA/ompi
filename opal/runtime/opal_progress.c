@@ -65,6 +65,10 @@ static volatile opal_progress_callback_t *callbacks_lp = NULL;
 static size_t callbacks_lp_len = 0;
 static size_t callbacks_lp_size = 0;
 
+static volatile opal_progress_callback_t *callbacks_block = NULL;
+static size_t callbacks_block_len = 0;
+static size_t callbacks_block_size = 0;
+
 /* do we want to call sched_yield() if nothing happened */
 bool opal_progress_yield_when_idle = false;
 
@@ -114,16 +118,18 @@ opal_progress_init(void)
     }
 #endif
 
-    callbacks_size = callbacks_lp_size = 8;
+    callbacks_size = callbacks_lp_size = callbacks_block_size = 8;
 
     callbacks = malloc (callbacks_size * sizeof (callbacks[0]));
     callbacks_lp = malloc (callbacks_lp_size * sizeof (callbacks_lp[0]));
+    callbacks_block = malloc (callbacks_lp_size * sizeof (callbacks_block[0]));
 
-    if (NULL == callbacks || NULL == callbacks_lp) {
+    if (NULL == callbacks || NULL == callbacks_lp || NULL == callbacks_block) {
         free ((void *) callbacks);
         free ((void *) callbacks_lp);
-        callbacks_size = callbacks_lp_size = 0;
-        callbacks = callbacks_lp = NULL;
+        free ((void *) callbacks_block);
+        callbacks_size = callbacks_lp_size = callbacks_block_size = 0;
+        callbacks = callbacks_lp = callbacks_block = NULL;
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
@@ -133,6 +139,10 @@ opal_progress_init(void)
 
     for (size_t i = 0 ; i < callbacks_lp_size ; ++i) {
         callbacks_lp[i] = fake_cb;
+    }
+
+    for (size_t i = 0 ; i < callbacks_block_size ; ++i) {
+        callbacks_block[i] = fake_cb;
     }
 
     OPAL_OUTPUT((debug_output, "progress: initialized event flag to: %x",
@@ -163,6 +173,11 @@ opal_progress_finalize(void)
     callbacks_lp_size = 0;
     free ((void *) callbacks_lp);
     callbacks_lp = NULL;
+
+    callbacks_block_len = 0;
+    callbacks_block_size = 0;
+    free ((void *) callbacks_block);
+    callbacks_block = NULL;
 
     opal_atomic_unlock(&progress_lock);
 
@@ -252,6 +267,10 @@ opal_progress(void)
          * the processor is oversubscribed - this will result in a best-case
          * latency equivalent to the time-slice.
          */
+
+        int cur_callback = num_calls % callbacks_block_len;
+        callbacks_block[cur_callback]();
+
         sched_yield();
     }
 #endif  /* defined(HAVE_SCHED_YIELD) */
@@ -430,7 +449,9 @@ int opal_progress_register (opal_progress_callback_t cb)
 
     opal_atomic_lock(&progress_lock);
 
+
     (void) _opal_progress_unregister (cb, callbacks_lp, &callbacks_lp_len);
+    (void) _opal_progress_unregister (cb, callbacks_block, &callbacks_block_len);
 
     ret = _opal_progress_register (cb, &callbacks, &callbacks_size, &callbacks_len);
 
@@ -446,8 +467,25 @@ int opal_progress_register_lp (opal_progress_callback_t cb)
     opal_atomic_lock(&progress_lock);
 
     (void) _opal_progress_unregister (cb, callbacks, &callbacks_len);
+    (void) _opal_progress_unregister (cb, callbacks_block, &callbacks_block_len);
 
     ret = _opal_progress_register (cb, &callbacks_lp, &callbacks_lp_size, &callbacks_lp_len);
+
+    opal_atomic_unlock(&progress_lock);
+
+    return ret;
+}
+
+int opal_progress_register_block (opal_progress_callback_t cb)
+{
+    int ret;
+
+    opal_atomic_lock(&progress_lock);
+
+    (void) _opal_progress_unregister (cb, callbacks, &callbacks_len);
+    (void) _opal_progress_unregister (cb, callbacks_lp, &callbacks_lp_len);
+
+    ret = _opal_progress_register (cb, &callbacks_block, &callbacks_block_size, &callbacks_block_len);
 
     opal_atomic_unlock(&progress_lock);
 
@@ -490,6 +528,12 @@ int opal_progress_unregister (opal_progress_callback_t cb)
         /* if not in the high-priority array try to remove from the lp array.
          * a callback will never be in both. */
         ret = _opal_progress_unregister (cb, callbacks_lp, &callbacks_lp_len);
+    }
+
+    if (OPAL_SUCCESS != ret) {
+        /* if not in the blocking array try to remove from the block array.
+         * a callback will never be in both. */
+        ret = _opal_progress_unregister (cb, callbacks_block, &callbacks_block_len);
     }
 
     opal_atomic_unlock(&progress_lock);

@@ -92,6 +92,7 @@ int mca_pml_ucx_del_procs(struct ompi_proc_t **procs, size_t nprocs);
 
 int mca_pml_ucx_enable(bool enable);
 int mca_pml_ucx_progress(void);
+int mca_pml_ucx_wait(void);
 
 int mca_pml_ucx_add_comm(struct ompi_communicator_t* comm);
 int mca_pml_ucx_del_comm(struct ompi_communicator_t* comm);
