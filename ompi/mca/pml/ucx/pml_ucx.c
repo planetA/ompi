@@ -461,7 +461,7 @@ int mca_pml_ucx_progress(void)
 
 int mca_pml_ucx_wait(void)
 {
-    ucp_worker_wait_timed(ompi_pml_ucx.ucp_worker, 100);
+    ucp_worker_wait_timed(ompi_pml_ucx.ucp_worker, opal_progress_block_timeout);
     return OMPI_SUCCESS;
 }
 

@@ -525,6 +525,7 @@ int orte_daemon(int argc, char *argv[])
        problematic in some scenarios (e.g., COMM_SPAWN, BTL's that
        require OOB messages for wireup, etc.). */
     opal_progress_set_yield_when_idle(false);
+    opal_progress_set_block_timeout(0);
 
     /* Change the default behavior of libevent such that we want to
        continually block rather than blocking for the default timeout

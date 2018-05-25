@@ -71,6 +71,7 @@ static size_t callbacks_block_size = 0;
 
 /* do we want to call sched_yield() if nothing happened */
 bool opal_progress_yield_when_idle = false;
+int opal_progress_block_timeout = 0;
 
 #if OPAL_PROGRESS_USE_TIMERS
 static opal_timer_t event_progress_last_time = 0;
@@ -149,6 +150,8 @@ opal_progress_init(void)
                  opal_progress_event_flag));
     OPAL_OUTPUT((debug_output, "progress: initialized yield_when_idle to: %s",
                  opal_progress_yield_when_idle ? "true" : "false"));
+    OPAL_OUTPUT((debug_output, "progress: initialized block_timeout to: %d",
+                 opal_progress_block_timeout));
     OPAL_OUTPUT((debug_output, "progress: initialized num users to: %d",
                  num_event_users));
     OPAL_OUTPUT((debug_output, "progress: initialized poll rate to: %ld",
@@ -268,8 +271,11 @@ opal_progress(void)
          * latency equivalent to the time-slice.
          */
 
-        int cur_callback = num_calls % callbacks_block_len;
-        callbacks_block[cur_callback]();
+        if (opal_progress_block_timeout != 0) {
+            static uint32_t cur_callback = 0;
+            cur_callback = (cur_callback + 1) % callbacks_block_len;
+            callbacks_block[cur_callback]();
+        }
 
         sched_yield();
     }
@@ -340,6 +346,19 @@ opal_progress_set_yield_when_idle(bool yieldopt)
 
     OPAL_OUTPUT((debug_output, "progress: progress_set_yield_when_idle to %s",
                                     opal_progress_yield_when_idle ? "true" : "false"));
+
+    return tmp;
+}
+
+
+int
+opal_progress_set_block_timeout(int block_timeout)
+{
+    int tmp = opal_progress_block_timeout;
+    opal_progress_block_timeout = block_timeout;
+
+    OPAL_OUTPUT((debug_output, "progress: progress_set_block_timeout to %d",
+                                    opal_progress_block_timeout));
 
     return tmp;
 }

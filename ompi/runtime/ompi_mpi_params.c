@@ -63,6 +63,7 @@ bool ompi_have_sparse_group_storage = OPAL_INT_TO_BOOL(OMPI_GROUP_SPARSE);
 bool ompi_use_sparse_group_storage = OPAL_INT_TO_BOOL(OMPI_GROUP_SPARSE);
 
 bool ompi_mpi_yield_when_idle = false;
+int ompi_mpi_block_timeout = 0;
 int ompi_mpi_event_tick_rate = -1;
 char *ompi_mpi_show_mca_params_string = NULL;
 bool ompi_mpi_have_sparse_group_storage = !!(OMPI_GROUP_SPARSE);
@@ -114,6 +115,13 @@ int ompi_mpi_register_params(void)
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &ompi_mpi_yield_when_idle);
+
+    ompi_mpi_block_timeout = 0;
+    (void) mca_base_var_register("ompi", "mpi", NULL, "block_timeout",
+                                 "Block timeout when waiting on progress",
+                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                                 &ompi_mpi_block_timeout);
 
     ompi_mpi_event_tick_rate = -1;
     (void) mca_base_var_register("ompi", "mpi", NULL, "event_tick_rate",

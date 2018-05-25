@@ -127,6 +127,22 @@ OPAL_DECLSPEC bool opal_progress_set_yield_when_idle(bool yieldopt);
 
 
 /**
+ * Set how long opal_progress() should block after being when idle
+ *
+ * Set how long opal_progress() should block the processor (by calling
+ * blocking progress) if no events were progressed during the polling 
+ * progress loop.  The return value of the callback functions is used
+ * to determine whether or not progress has been made and blocking is
+ * required.  By default, the event loop will not block at all. 
+ * Blocking will happen only if yielding is also allowed.
+ *
+ * @param   block_timeout  Timeout for blocking.
+ * @return         Previous value of the block_timeout option.
+ */
+OPAL_DECLSPEC int opal_progress_set_block_timeout(int block_timeout);
+
+
+/**
  * Set time between calls into the event library
  *
  * Set time between calls into the event library when there are no
@@ -181,6 +197,9 @@ OPAL_DECLSPEC extern int opal_progress_spin_count;
 
 /* do we want to call sched_yield() if nothing happened */
 OPAL_DECLSPEC extern bool opal_progress_yield_when_idle;
+
+/* How much we block if no progress has been made */
+OPAL_DECLSPEC extern int opal_progress_block_timeout;
 
 /**
  * Progress until flag is true or poll iterations completed

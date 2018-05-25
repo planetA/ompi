@@ -746,6 +746,7 @@ static int rte_init(void)
        problematic in some scenarios (e.g., COMM_SPAWN, BTL's that
        require OOB messages for wireup, etc.). */
     opal_progress_set_yield_when_idle(false);
+    opal_progress_set_block_timeout(0);
     return ORTE_SUCCESS;
 
   error:

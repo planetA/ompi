@@ -158,6 +158,13 @@ int opal_register_params(void)
                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                  OPAL_INFO_LVL_8, MCA_BASE_VAR_SCOPE_LOCAL,
                                  &opal_progress_yield_when_idle);
+
+    opal_progress_block_timeout = 0;
+    ret = mca_base_var_register ("opal", "opal", "progress", "block_timeout",
+                                 "Block timeout when waiting on progress",
+                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                 OPAL_INFO_LVL_8, MCA_BASE_VAR_SCOPE_LOCAL,
+                                 &opal_progress_block_timeout);
 #endif
 
 #if OPAL_ENABLE_DEBUG

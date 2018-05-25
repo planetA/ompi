@@ -284,6 +284,7 @@ opal_list_t ompi_registered_datareps = {{0}};
 
 bool ompi_enable_timing = false;
 extern bool ompi_mpi_yield_when_idle;
+extern int ompi_mpi_block_timeout;
 extern int ompi_mpi_event_tick_rate;
 
 /**
@@ -962,6 +963,9 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     /* see if yield_when_idle was specified - if so, use it */
     opal_progress_set_yield_when_idle(ompi_mpi_yield_when_idle);
+
+    /* see if yield_when_idle was specified - if so, use it */
+    opal_progress_set_block_timeout(ompi_mpi_block_timeout);
 
     /* negative value means use default - just don't do anything */
     if (ompi_mpi_event_tick_rate >= 0) {

@@ -266,6 +266,7 @@ int main(int argc, char *argv[])
        before being delivered to MPI processes, which can be
        problematic in some scenarios (e.g., COMM_SPAWN). */
     opal_progress_set_yield_when_idle(false);
+    opal_progress_set_block_timeout(0);
 
     /* Change the default behavior of libevent such that we want to
        continually block rather than blocking for the default timeout
