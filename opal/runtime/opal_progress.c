@@ -271,7 +271,7 @@ opal_progress(void)
          * latency equivalent to the time-slice.
          */
 
-        if (opal_progress_block_timeout != 0) {
+        if (opal_progress_block_timeout != 0 && callbacks_block_len > 0) {
             static uint32_t cur_callback = 0;
             cur_callback = (cur_callback + 1) % callbacks_block_len;
             callbacks_block[cur_callback]();
